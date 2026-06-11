@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Quiz Builder</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --surface: #161827; --surface2: #1e2235;
+    --border: #2d3148; --text: #e2e8f0; --muted: #64748b;
+    --accent: #6366f1; --green: #22c55e; --red: #ef4444; --amber: #f59e0b;
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  header { padding: 9px 16px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 10px; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  header h1 { font-size: 14px; font-weight: 700; color: #a5b4fc; }
+  .quiz-badge { font-size: 11px; padding: 2px 9px; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; color: var(--muted); display: none; }
+  .quiz-badge.show { display: inline; }
+  .header-right { display: flex; gap: 6px; align-items: center; }
+
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* LEFT */
+  .left-panel { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; border-right: 2px solid var(--border); overflow: hidden; }
+  .panel-header { padding: 8px 12px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 8px; }
+  .panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .html-area { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+  #htmlInput { flex: 1; width: 100%; background: transparent; border: none; padding: 12px; color: var(--text); font-family: 'Cascadia Code', Consolas, monospace; font-size: 12px; line-height: 1.6; resize: none; tab-size: 2; min-height: 0; }
+  #htmlInput:focus { outline: none; }
+  textarea::placeholder { color: #334155; }
+  .blocks-list { border-top: 1px solid var(--border); overflow-y: auto; max-height: 200px; flex-shrink: 0; }
+  .block-item { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-bottom: 1px solid #1a1d2e; font-size: 12px; cursor: pointer; transition: background .1s; user-select: none; }
+  .block-item:hover, .block-item.active { background: var(--surface2); }
+  .block-badge { width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; }
+  .block-snippet { font-family: 'Cascadia Code', Consolas, monospace; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .block-del { background: none; border: none; color: #334155; cursor: pointer; font-size: 15px; padding: 0; flex-shrink: 0; line-height: 1; }
+  .block-del:hover { color: var(--red); }
+
+  /* RIGHT */
+  .right-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+  .tabs-bar { padding: 0 12px; background: var(--surface); border-bottom: 1px solid var(--border); display: none; align-items: flex-end; gap: 2px; flex-shrink: 0; overflow-x: auto; }
+  .tab { padding: 7px 12px 5px; font-size: 12px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted); white-space: nowrap; transition: color .1s; display: flex; align-items: center; gap: 6px; user-select: none; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  #editorsArea { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+  .js-editor-wrap { flex: 1; display: none; flex-direction: column; overflow: hidden; min-height: 0; }
+  .editor-toolbar { padding: 6px 12px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+  .editor-toolbar .hint { font-size: 11px; color: var(--muted); flex: 1; }
+  .js-editor { flex: 1; padding: 12px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 13px; line-height: 1.7; color: var(--text); outline: none; overflow: auto; white-space: pre-wrap; word-break: break-all; caret-color: var(--accent); }
+  .js-editor:empty::before { content: attr(data-placeholder); color: #334155; pointer-events: none; white-space: pre; }
+  .blank-mark { background: rgba(99,102,241,.2); border: 1px solid var(--accent); border-radius: 4px; padding: 0 3px; color: #a5b4fc; }
+
+  /* QUIZ */
+  #quizArea { display: none; flex: 1; flex-direction: column; overflow: hidden; min-height: 0; }
+  .quiz-scroll { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+  .quiz-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .quiz-block-header { padding: 7px 12px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+  .quiz-code { padding: 12px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 13px; line-height: 1.9; white-space: pre-wrap; word-break: break-all; }
+  .blank-input { background: var(--bg); border: 2px solid var(--accent); border-radius: 5px; color: #a5b4fc; font-family: 'Cascadia Code', Consolas, monospace; font-size: 12px; padding: 0 6px; height: 22px; vertical-align: middle; margin: 0 2px; transition: border-color .15s, background .15s; }
+  .blank-input:focus { outline: none; border-color: #8b5cf6; }
+  .blank-input.correct { border-color: var(--green); background: #052e16; color: #86efac; }
+  .blank-input.wrong   { border-color: var(--red);   background: #2a0000; color: #fca5a5; }
+  .quiz-footer { padding: 10px 18px; display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+  .score-badge { font-size: 16px; font-weight: 700; margin-left: auto; display: none; }
+  .score-pass { color: var(--green); }
+  .score-fail { color: var(--amber); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 500px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  .modal-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .modal-header h2 { font-size: 14px; font-weight: 700; }
+  .modal-body { flex: 1; overflow-y: auto; }
+  .quiz-row { padding: 11px 18px; border-bottom: 1px solid #1a1d2e; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .quiz-row:hover { background: var(--surface2); }
+  .quiz-row-info { flex: 1; }
+  .quiz-row-name { font-size: 13px; font-weight: 600; }
+  .quiz-row-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .modal-footer { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
+
+  /* EMPTY */
+  .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #334155; padding: 32px; text-align: center; font-size: 13px; line-height: 1.6; }
+  .empty svg { opacity: .25; margin-bottom: 4px; }
+
+  /* BUTTONS */
+  .btn { border: none; border-radius: 7px; padding: 6px 13px; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity .15s, transform .1s; white-space: nowrap; }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+  .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+  .btn-secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+  .btn-secondary:hover { border-color: var(--accent); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+  .btn-danger { background: transparent; border: 1px solid #7f1d1d; color: #fca5a5; }
+  .btn-danger:hover { background: #2a0000; }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>JS Quiz Builder</h1>
+    <span class="quiz-badge" id="quizBadge"></span>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-ghost" id="savedBtn" onclick="openModal()">Saved (0)</button>
+    <button class="btn btn-secondary" id="saveBtn" onclick="saveQuiz()">Save Quiz</button>
+    <button class="btn btn-ghost" id="backBtn" style="display:none" onclick="exitQuiz()">← Back</button>
+    <button class="btn btn-primary" id="startBtn" onclick="startQuiz()">Start Quiz ▶</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="left-panel">
+    <div class="panel-header">
+      <span class="panel-title">HTML Code</span>
+      <button class="btn btn-secondary" onclick="addBlock()" style="font-size:11px;padding:4px 10px">+ Add Block</button>
+    </div>
+    <div class="html-area">
+      <textarea id="htmlInput" placeholder="1. Paste HTML here&#10;2. Select a portion that needs JS&#10;3. Click + Add Block"></textarea>
+    </div>
+    <div class="blocks-list" id="blocksList">
+      <div class="empty" id="blocksEmpty" style="padding:12px;font-size:11px;flex:none;display:flex">Select HTML text → + Add Block</div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="tabs-bar" id="tabsBar"></div>
+    <div id="editorsArea">
+      <div class="empty" id="jsEmpty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline>
+        </svg>
+        Add HTML blocks on the left, then write JS here.<br>Or load a saved quiz from <strong>Saved</strong>.
+      </div>
+    </div>
+    <div id="quizArea">
+      <div class="quiz-scroll" id="quizContent"></div>
+      <div class="quiz-footer">
+        <button class="btn btn-primary" onclick="checkAnswers()">✓ Check Answers</button>
+        <button class="btn btn-ghost" onclick="resetQuiz()">↺ Reset</button>
+        <span class="score-badge" id="scoreBadge"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Saved Quizzes Modal -->
+<div class="modal-overlay" id="savedModal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Saved Quizzes</h2>
+      <button class="btn btn-ghost" style="padding:3px 8px" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="quizList"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="exportJSON()">Export quizzes.json</button>
+      <label class="btn btn-secondary" style="cursor:pointer">Import JSON <input type="file" accept=".json" style="display:none" onchange="importJSON(this)"></label>
+      <div style="flex:1"></div>
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#6366f1','#f59e0b','#22c55e','#ec4899','#14b8a6','#f97316'];
+let blocks = [], activeId = null, inQuiz = false;
+let saved = [], curId = null, curName = null;
+
+// ── Default quiz ──────────────────────────────────────────
+const DEFAULT_QUIZ = {
+  id: 'default_dom_quiz',
+  name: 'DOM Manipulation Basics',
+  createdAt: '2026-06-11T00:00:00.000Z',
+  htmlSource: '<button id="myBtn">Click Me</button>\n<p id="output"></p>\n\n<form id="loginForm">\n  <input type="text" id="username" placeholder="Enter username" />\n  <button type="submit">Login</button>\n</form>\n\n<div id="box">Hello World</div>\n<button id="toggleBtn">Toggle</button>',
+  blocks: [
+    { id: 1, color: '#6366f1', htmlSnippet: '<button id="myBtn">Click Me</button>', segments: [
+      {type:'text',  content:'document.'},
+      {type:'blank', content:'getElementById'},
+      {type:'text',  content:'("myBtn").'},
+      {type:'blank', content:'addEventListener'},
+      {type:'text',  content:'("'},
+      {type:'blank', content:'click'},
+      {type:'text',  content:'", function() {\n  document.getElementById("output").'},
+      {type:'blank', content:'innerHTML'},
+      {type:'text',  content:' = "Button clicked!";\n});'}
+    ]},
+    { id: 2, color: '#f59e0b', htmlSnippet: '<form id="loginForm">...</form>', segments: [
+      {type:'text',  content:'document.getElementById("loginForm").addEventListener("submit", function(e) {\n  e.'},
+      {type:'blank', content:'preventDefault'},
+      {type:'text',  content:'();\n  const user = document.getElementById("username").'},
+      {type:'blank', content:'value'},
+      {type:'text',  content:';\n  console.'},
+      {type:'blank', content:'log'},
+      {type:'text',  content:'("Welcome, " + user);\n});'}
+    ]},
+    { id: 3, color: '#22c55e', htmlSnippet: '<div id="box">Hello World</div>', segments: [
+      {type:'text',  content:'document.getElementById("toggleBtn").addEventListener("click", function() {\n  const box = document.getElementById("box");\n  if (box.style.'},
+      {type:'blank', content:'display'},
+      {type:'text',  content:' === "none") {\n    box.style.display = "'},
+      {type:'blank', content:'block'},
+      {type:'text',  content:'";\n  } else {\n    box.style.display = "'},
+      {type:'blank', content:'none'},
+      {type:'text',  content:'";\n  }\n});'}
+    ]}
+  ]
+};
+
+// ── Init ──────────────────────────────────────────────────
+function init() {
+  try { saved = JSON.parse(localStorage.getItem('jsquiz_data') || '[]'); } catch { saved = []; }
+  if (!saved.length) { saved = [DEFAULT_QUIZ]; persist(); }
+  updateSavedBtn();
+}
+
+function persist() { localStorage.setItem('jsquiz_data', JSON.stringify(saved)); }
+function updateSavedBtn() { document.getElementById('savedBtn').textContent = `Saved (${saved.length})`; }
+function updateBadge() {
+  const b = document.getElementById('quizBadge');
+  if (curName) { b.textContent = curName; b.classList.add('show'); } else b.classList.remove('show');
+}
+
+// ── Block management ──────────────────────────────────────
+function addBlock() {
+  const ta = document.getElementById('htmlInput');
+  const snippet = ta.value.substring(ta.selectionStart, ta.selectionEnd).trim();
+  if (!snippet) { alert('Select some HTML text first, then click "+ Add Block".'); return; }
+  const id = Date.now(), color = COLORS[blocks.length % COLORS.length];
+  blocks.push({ id, color, htmlSnippet: snippet });
+  buildEditor(id);
+  renderBlockList();
+  switchTab(id);
+}
+
+function buildEditor(id) {
+  const wrap = document.createElement('div');
+  wrap.id = 'ew-' + id;
+  wrap.className = 'js-editor-wrap';
+  wrap.innerHTML = `
+    <div class="editor-toolbar">
+      <span class="hint">Select text in the editor → mark as blank:</span>
+      <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="markBlank(${id})">◻ Mark Blank</button>
+      <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="clearBlanks(${id})">✕ Clear</button>
+    </div>`;
+  const editor = document.createElement('div');
+  editor.id = 'ed-' + id;
+  editor.className = 'js-editor';
+  editor.contentEditable = 'true';
+  editor.spellcheck = false;
+  editor.setAttribute('data-placeholder', 'Write the JavaScript for this block...\n\nThen select key tokens and click "◻ Mark Blank".');
+  editor.addEventListener('keydown', e => { if (e.key === 'Tab') { e.preventDefault(); document.execCommand('insertText', false, '  '); } });
+  wrap.appendChild(editor);
+  document.getElementById('editorsArea').appendChild(wrap);
+}
+
+function markBlank(id) {
+  const editor = document.getElementById('ed-' + id);
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.rangeCount) { alert('Select text inside the JS editor first.'); return; }
+  const range = sel.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) { alert('Select text inside the JS editor.'); return; }
+  const span = document.createElement('span');
+  span.className = 'blank-mark';
+  try { range.surroundContents(span); }
+  catch { span.appendChild(range.extractContents()); range.insertNode(span); }
+  sel.removeAllRanges();
+}
+
+function clearBlanks(id) {
+  const ed = document.getElementById('ed-' + id);
+  ed.querySelectorAll('.blank-mark').forEach(s => s.replaceWith(document.createTextNode(s.textContent)));
+  ed.normalize();
+}
+
+function deleteBlock(id, e) {
+  e.stopPropagation();
+  blocks = blocks.filter(b => b.id !== id);
+  document.getElementById('ew-' + id)?.remove();
+  renderBlockList();
+  if (activeId === id) { activeId = null; if (blocks.length) switchTab(blocks[blocks.length-1].id); else renderTabs(); }
+  else renderTabs();
+}
+
+function renderBlockList() {
+  const list = document.getElementById('blocksList');
+  list.querySelectorAll('.block-item').forEach(el => el.remove());
+  document.getElementById('blocksEmpty').style.display = blocks.length ? 'none' : 'flex';
+  blocks.forEach((b, i) => {
+    const item = document.createElement('div');
+    item.className = 'block-item' + (b.id === activeId ? ' active' : '');
+    item.onclick = () => switchTab(b.id);
+    item.innerHTML = `<div class="block-badge" style="background:${b.color}">${i+1}</div><div class="block-snippet" title="${esc(b.htmlSnippet)}">${esc(b.htmlSnippet.replace(/\s+/g,' '))}</div><button class="block-del" onclick="deleteBlock(${b.id},event)">×</button>`;
+    list.appendChild(item);
+  });
+}
+
+function renderTabs() {
+  const bar = document.getElementById('tabsBar');
+  bar.innerHTML = '';
+  if (!blocks.length) { bar.style.display = 'none'; document.getElementById('jsEmpty').style.display = 'flex'; return; }
+  bar.style.display = 'flex';
+  document.getElementById('jsEmpty').style.display = 'none';
+  blocks.forEach((b, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (b.id === activeId ? ' active' : '');
+    tab.onclick = () => switchTab(b.id);
+    tab.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${b.color};display:inline-block"></span>Block ${i+1}`;
+    bar.appendChild(tab);
+  });
+}
+
+function switchTab(id) {
+  activeId = id;
+  blocks.forEach(b => { const w = document.getElementById('ew-'+b.id); if (w) w.style.display = b.id===id ? 'flex' : 'none'; });
+  renderTabs(); renderBlockList();
+}
+
+// ── Save / Load quiz ──────────────────────────────────────
+function saveQuiz() {
+  if (!blocks.length) { alert('Add blocks and write JavaScript first.'); return; }
+  const name = prompt('Quiz name:', curName || 'My Quiz');
+  if (!name) return;
+  const quizBlocks = blocks.map(b => ({ id: b.id, color: b.color, htmlSnippet: b.htmlSnippet, segments: serialize(document.getElementById('ed-'+b.id)) }));
+  const id = curId || String(Date.now());
+  const quiz = { id, name, createdAt: new Date().toISOString(), htmlSource: document.getElementById('htmlInput').value, blocks: quizBlocks };
+  const idx = saved.findIndex(q => q.id === id);
+  if (idx >= 0) saved[idx] = quiz; else saved.push(quiz);
+  curId = id; curName = name;
+  persist(); updateSavedBtn(); updateBadge();
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = 'Saved ✓'; btn.style.color = 'var(--green)';
+  setTimeout(() => { btn.textContent = 'Save Quiz'; btn.style.color = ''; }, 1500);
+}
+
+function loadQuiz(qid) {
+  const quiz = saved.find(q => q.id === qid);
+  if (!quiz) return;
+  if (inQuiz) exitQuiz();
+  blocks.forEach(b => document.getElementById('ew-'+b.id)?.remove());
+  blocks = []; activeId = null;
+  document.getElementById('htmlInput').value = quiz.htmlSource || '';
+  quiz.blocks.forEach(sb => {
+    blocks.push({ id: sb.id, color: sb.color, htmlSnippet: sb.htmlSnippet });
+    buildEditor(sb.id);
+    if (sb.segments) loadSegs(document.getElementById('ed-'+sb.id), sb.segments);
+  });
+  curId = quiz.id; curName = quiz.name;
+  updateBadge(); renderBlockList();
+  if (blocks.length) switchTab(blocks[0].id); else renderTabs();
+  closeModal();
+}
+
+function loadSegs(editor, segments) {
+  editor.innerHTML = '';
+  segments.forEach(seg => {
+    if (seg.type === 'text') {
+      seg.content.split('\n').forEach((line, i, arr) => {
+        if (line) editor.appendChild(document.createTextNode(line));
+        if (i < arr.length - 1) editor.appendChild(document.createElement('br'));
+      });
+    } else {
+      const span = document.createElement('span');
+      span.className = 'blank-mark';
+      span.textContent = seg.content;
+      editor.appendChild(span);
+    }
+  });
+}
+
+function deleteQuiz(id, e) {
+  e.stopPropagation();
+  if (!confirm('Delete this quiz?')) return;
+  saved = saved.filter(q => q.id !== id);
+  if (curId === id) { curId = null; curName = null; updateBadge(); }
+  persist(); updateSavedBtn(); renderModal();
+}
+
+// ── Modal ─────────────────────────────────────────────────
+function openModal() { renderModal(); document.getElementById('savedModal').style.display = 'flex'; }
+function closeModal() { document.getElementById('savedModal').style.display = 'none'; }
+
+function renderModal() {
+  const list = document.getElementById('quizList');
+  if (!saved.length) { list.innerHTML = '<div class="empty" style="padding:32px">No saved quizzes yet.</div>'; return; }
+  list.innerHTML = '';
+  saved.forEach(quiz => {
+    const date = new Date(quiz.createdAt).toLocaleDateString(undefined, {month:'short',day:'numeric',year:'numeric'});
+    const blanks = (quiz.blocks||[]).reduce((n,b) => n + (b.segments||[]).filter(s=>s.type==='blank').length, 0);
+    const row = document.createElement('div');
+    row.className = 'quiz-row';
+    row.onclick = () => loadQuiz(quiz.id);
+    row.innerHTML = `
+      <div class="quiz-row-info">
+        <div class="quiz-row-name">${esc(quiz.name)} ${quiz.id===curId?'<span style="font-size:10px;color:var(--accent);font-weight:400">(current)</span>':''}</div>
+        <div class="quiz-row-meta">${(quiz.blocks||[]).length} blocks · ${blanks} blanks · ${date}</div>
+      </div>
+      <button class="btn btn-primary" style="font-size:11px;padding:4px 12px" onclick="event.stopPropagation();loadQuiz('${quiz.id}')">Load</button>
+      <button class="btn btn-danger" style="font-size:11px;padding:4px 10px" onclick="deleteQuiz('${quiz.id}',event)">Delete</button>`;
+    list.appendChild(row);
+  });
+}
+
+document.getElementById('savedModal').addEventListener('click', e => { if (e.target.id === 'savedModal') closeModal(); });
+
+// ── Export / Import ───────────────────────────────────────
+function exportJSON() {
+  const blob = new Blob([JSON.stringify({version:1, quizzes:saved}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'quizzes.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+
+function importJSON(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const incoming = data.quizzes || (Array.isArray(data) ? data : []);
+      if (!incoming.length) { alert('No quizzes found.'); return; }
+      incoming.forEach(q => { const i = saved.findIndex(x=>x.id===q.id); if (i>=0) saved[i]=q; else saved.push(q); });
+      persist(); updateSavedBtn(); renderModal();
+      alert(`Imported ${incoming.length} quiz${incoming.length>1?'zes':''}.`);
+    } catch { alert('Invalid JSON file.'); }
+  };
+  reader.readAsText(file); input.value = '';
+}
+
+// ── Quiz mode ─────────────────────────────────────────────
+function startQuiz() {
+  if (!blocks.length) { alert('Add some HTML blocks first.'); return; }
+  if (!blocks.some(b => document.getElementById('ed-'+b.id)?.querySelector('.blank-mark'))) {
+    alert('Mark at least one blank first.\nSelect text in a JS editor → "◻ Mark Blank".'); return;
+  }
+  inQuiz = true;
+  document.getElementById('editorsArea').style.display = 'none';
+  document.getElementById('tabsBar').style.display = 'none';
+  document.getElementById('quizArea').style.display = 'flex';
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('saveBtn').style.display = 'none';
+  document.getElementById('backBtn').style.display = '';
+  document.getElementById('scoreBadge').style.display = 'none';
+  buildQuiz();
+}
+
+function buildQuiz() {
+  const content = document.getElementById('quizContent');
+  content.innerHTML = '';
+  blocks.forEach((b, i) => {
+    const editor = document.getElementById('ed-'+b.id); if (!editor) return;
+    const segs = serialize(editor);
+    const section = document.createElement('div'); section.className = 'quiz-block';
+    const hdr = document.createElement('div'); hdr.className = 'quiz-block-header'; hdr.style.color = b.color;
+    const hasBlanks = segs.some(s=>s.type==='blank');
+    hdr.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${b.color};display:inline-block"></span>Block ${i+1}${!hasBlanks?' <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">(reference)</span>':''}`;
+    const code = document.createElement('div'); code.className = 'quiz-code';
+    segs.forEach(seg => {
+      if (seg.type === 'text') { code.appendChild(document.createTextNode(seg.content)); }
+      else {
+        const inp = document.createElement('input');
+        inp.type = 'text'; inp.className = 'blank-input'; inp.dataset.correct = seg.content; inp.placeholder = '?';
+        inp.style.width = Math.max(60, seg.content.length*8+24)+'px';
+        inp.addEventListener('input', () => inp.classList.remove('correct','wrong'));
+        inp.addEventListener('keydown', e => { if (e.key==='Enter') checkAnswers(); });
+        code.appendChild(inp);
+      }
+    });
+    section.append(hdr, code); content.appendChild(section);
+  });
+}
+
+function checkAnswers() {
+  const inputs = document.querySelectorAll('#quizContent .blank-input'); if (!inputs.length) return;
+  let correct = 0;
+  inputs.forEach(inp => { const ok = inp.value.trim()===inp.dataset.correct.trim(); inp.classList.toggle('correct',ok); inp.classList.toggle('wrong',!ok); if(ok)correct++; });
+  const pct = Math.round(correct/inputs.length*100);
+  const badge = document.getElementById('scoreBadge');
+  badge.textContent = `${correct}/${inputs.length} — ${pct}%`;
+  badge.className = 'score-badge '+(pct>=70?'score-pass':'score-fail');
+  badge.style.display = '';
+}
+
+function resetQuiz() {
+  document.querySelectorAll('#quizContent .blank-input').forEach(inp => { inp.value=''; inp.classList.remove('correct','wrong'); });
+  document.getElementById('scoreBadge').style.display = 'none';
+}
+
+function exitQuiz() {
+  inQuiz = false;
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('editorsArea').style.display = 'flex';
+  document.getElementById('backBtn').style.display = 'none';
+  document.getElementById('startBtn').style.display = '';
+  document.getElementById('saveBtn').style.display = '';
+  if (blocks.length) { document.getElementById('tabsBar').style.display='flex'; if(!activeId)switchTab(blocks[0].id); else renderTabs(); }
+}
+
+// ── Serialize contenteditable → segments ──────────────────
+function serialize(editor) {
+  if (!editor) return [];
+  const segs = [];
+  const push = (type, content) => { const last=segs[segs.length-1]; if(type==='text'&&last?.type==='text') last.content+=content; else segs.push({type,content}); };
+  const walk = node => {
+    if (node.nodeType===3) { if(node.textContent) push('text',node.textContent); }
+    else if (node.nodeType===1) {
+      const tag = node.tagName;
+      if (node.classList.contains('blank-mark')) segs.push({type:'blank',content:node.textContent});
+      else if (tag==='BR') push('text','\n');
+      else if (tag==='DIV'||tag==='P') { const b=segs.length; node.childNodes.forEach(walk); if(segs.length>b) push('text','\n'); }
+      else node.childNodes.forEach(walk);
+    }
+  };
+  editor.childNodes.forEach(walk);
+  const last = segs[segs.length-1]; if(last?.type==='text') last.content=last.content.replace(/\n+$/,'');
+  return segs;
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+document.getElementById('htmlInput').addEventListener('keydown', e => {
+  if (e.key==='Tab') { e.preventDefault(); const s=e.target.selectionStart; e.target.value=e.target.value.slice(0,s)+'  '+e.target.value.slice(e.target.selectionEnd); e.target.selectionStart=e.target.selectionEnd=s+2; }
+});
+
+init();
+</script>
+</body>
+</html>

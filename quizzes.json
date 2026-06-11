@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "quizzes": [
+    {
+      "id": "default_dom_quiz",
+      "name": "DOM Manipulation Basics",
+      "createdAt": "2026-06-11T00:00:00.000Z",
+      "htmlSource": "<button id=\"myBtn\">Click Me</button>\n<p id=\"output\"></p>\n\n<form id=\"loginForm\">\n  <input type=\"text\" id=\"username\" placeholder=\"Enter username\" />\n  <button type=\"submit\">Login</button>\n</form>\n\n<div id=\"box\">Hello World</div>\n<button id=\"toggleBtn\">Toggle</button>",
+      "blocks": [
+        {
+          "id": 1,
+          "color": "#6366f1",
+          "htmlSnippet": "<button id=\"myBtn\">Click Me</button>",
+          "segments": [
+            { "type": "text",  "content": "document." },
+            { "type": "blank", "content": "getElementById" },
+            { "type": "text",  "content": "(\"myBtn\")." },
+            { "type": "blank", "content": "addEventListener" },
+            { "type": "text",  "content": "(\"" },
+            { "type": "blank", "content": "click" },
+            { "type": "text",  "content": "\", function() {\n  document.getElementById(\"output\")." },
+            { "type": "blank", "content": "innerHTML" },
+            { "type": "text",  "content": " = \"Button clicked!\";\n});" }
+          ]
+        },
+        {
+          "id": 2,
+          "color": "#f59e0b",
+          "htmlSnippet": "<form id=\"loginForm\">...</form>",
+          "segments": [
+            { "type": "text",  "content": "document.getElementById(\"loginForm\").addEventListener(\"submit\", function(e) {\n  e." },
+            { "type": "blank", "content": "preventDefault" },
+            { "type": "text",  "content": "();\n  const user = document.getElementById(\"username\")." },
+            { "type": "blank", "content": "value" },
+            { "type": "text",  "content": ";\n  console." },
+            { "type": "blank", "content": "log" },
+            { "type": "text",  "content": "(\"Welcome, \" + user);\n});" }
+          ]
+        },
+        {
+          "id": 3,
+          "color": "#22c55e",
+          "htmlSnippet": "<div id=\"box\">Hello World</div>",
+          "segments": [
+            { "type": "text",  "content": "document.getElementById(\"toggleBtn\").addEventListener(\"click\", function() {\n  const box = document.getElementById(\"box\");\n  if (box.style." },
+            { "type": "blank", "content": "display" },
+            { "type": "text",  "content": " === \"none\") {\n    box.style.display = \"" },
+            { "type": "blank", "content": "block" },
+            { "type": "text",  "content": "\";\n  } else {\n    box.style.display = \"" },
+            { "type": "blank", "content": "none" },
+            { "type": "text",  "content": "\";\n  }\n});" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "todo_list_quiz",
+      "name": "To-Do List",
+      "createdAt": "2026-06-11T00:00:00.000Z",
+      "htmlSource": "<input type=\"text\" id=\"todoInput\" placeholder=\"New task...\" />\n<button id=\"addBtn\">Add</button>\n\n<ul id=\"todoList\">\n  <!-- items go here -->\n  <!-- each item looks like: -->\n  <!-- <li>Task name <button class=\"delete\">✕</button></li> -->\n</ul>",
+      "blocks": [
+        {
+          "id": 101,
+          "color": "#6366f1",
+          "htmlSnippet": "<button id=\"addBtn\">Add</button>",
+          "segments": [
+            { "type": "text",  "content": "document.getElementById(\"addBtn\").addEventListener(\"click\", function() {\n  const text = document.getElementById(\"todoInput\")." },
+            { "type": "blank", "content": "value" },
+            { "type": "text",  "content": ".trim();\n  if (!text) return;\n\n  const li = document." },
+            { "type": "blank", "content": "createElement" },
+            { "type": "text",  "content": "(\"li\");\n  li." },
+            { "type": "blank", "content": "textContent" },
+            { "type": "text",  "content": " = text;\n\n  const btn = document.createElement(\"button\");\n  btn.className = \"delete\";\n  btn.textContent = \"✕\";\n  li." },
+            { "type": "blank", "content": "appendChild" },
+            { "type": "text",  "content": "(btn);\n\n  document.getElementById(\"todoList\").appendChild(li);\n  document.getElementById(\"todoInput\").value = \"\";\n});" }
+          ]
+        },
+        {
+          "id": 102,
+          "color": "#f59e0b",
+          "htmlSnippet": "<ul id=\"todoList\"> (toggle done)",
+          "segments": [
+            { "type": "text",  "content": "document.getElementById(\"todoList\").addEventListener(\"click\", function(e) {\n  if (e.target." },
+            { "type": "blank", "content": "tagName" },
+            { "type": "text",  "content": " === \"LI\") {\n    e.target." },
+            { "type": "blank", "content": "classList" },
+            { "type": "text",  "content": "." },
+            { "type": "blank", "content": "toggle" },
+            { "type": "text",  "content": "(\"done\");\n  }\n});" }
+          ]
+        },
+        {
+          "id": 103,
+          "color": "#22c55e",
+          "htmlSnippet": "<button class=\"delete\">✕</button>",
+          "segments": [
+            { "type": "text",  "content": "document.getElementById(\"todoList\").addEventListener(\"click\", function(e) {\n  if (e.target.classList." },
+            { "type": "blank", "content": "contains" },
+            { "type": "text",  "content": "(\"delete\")) {\n    e.target." },
+            { "type": "blank", "content": "parentElement" },
+            { "type": "text",  "content": "." },
+            { "type": "blank", "content": "remove" },
+            { "type": "text",  "content": "();\n  }\n});" }
+          ]
+        }
+      ]
+    }
+  ,
+    {
+      "id": "calculator_quiz",
+      "name": "Calculator",
+      "createdAt": "2026-06-11T00:00:00.000Z",
+      "htmlSource": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Document</title>\n    <link rel=\"stylesheet\" href=\"index.css\">\n</head>\n<body>\n    <div id=\"calculato\">\n        <input id=\"display\" readonly>\n        <div id=\"keys\">\n            <button onclick=\"appendToDisplay('+')\">+</button>\n            <button onclick=\"appendToDisplay('-')\">-</button>\n            <button onclick=\"appendToDisplay('*')\">*</button> \n            <button onclick=\"appendToDisplay('/')\">/</button>\n            <button onclick=\"appendToDisplay('7')\">7</button>\n            <button onclick=\"appendToDisplay('8')\">8</button>\n            <button onclick=\"appendToDisplay('9')\">9</button>\n            <button onclick=\"appendToDisplay('4')\">4</button>\n            <button onclick=\"appendToDisplay('5')\">5</button>\n            <button onclick=\"appendToDisplay('6')\">6</button>\n            <button onclick=\"appendToDisplay('1')\">1</button>\n            <button onclick=\"appendToDisplay('2')\">2</button>\n            <button onclick=\"appendToDisplay('3')\">3</button>\n            <button onclick=\"appendToDisplay('0')\">0</button>\n            <button onclick=\"appendToDisplay('.')\">.</button>\n            <button onclick=\"clearDisplay()\">C</button>\n            <button onclick=\"calculateResult()\">=</button>\n    </div>\n    </div>\n    <script src=\"index.js\"></script>\n</body>\n</html>",
+      "blocks": [
+        {
+          "id": 201,
+          "color": "#6366f1",
+          "htmlSnippet": "<button onclick=\"appendToDisplay('+')\">,  ...",
+          "segments": [
+            { "type": "text",  "content": "function appendToDisplay(" },
+            { "type": "blank", "content": "value" },
+            { "type": "text",  "content": ") {\n  document." },
+            { "type": "blank", "content": "getElementById" },
+            { "type": "text",  "content": "(\"display\")." },
+            { "type": "blank", "content": "value" },
+            { "type": "text",  "content": " " },
+            { "type": "blank", "content": "+=" },
+            { "type": "text",  "content": " value;\n}" }
+          ]
+        },
+        {
+          "id": 202,
+          "color": "#f59e0b",
+          "htmlSnippet": "<button onclick=\"clearDisplay()\">C</button>",
+          "segments": [
+            { "type": "text",  "content": "function " },
+            { "type": "blank", "content": "clearDisplay" },
+            { "type": "text",  "content": "() {\n  document.getElementById(\"display\")." },
+            { "type": "blank", "content": "value" },
+            { "type": "text",  "content": " = " },
+            { "type": "blank", "content": "\"\"" },
+            { "type": "text",  "content": ";\n}" }
+          ]
+        },
+        {
+          "id": 203,
+          "color": "#22c55e",
+          "htmlSnippet": "<button onclick=\"calculateResult()\">=</button>",
+          "segments": [
+            { "type": "text",  "content": "function calculateResult() {\n  const display = document.getElementById(\"display\");\n  display.value = " },
+            { "type": "blank", "content": "eval" },
+            { "type": "text",  "content": "(" },
+            { "type": "blank", "content": "display.value" },
+            { "type": "text",  "content": ");\n}" }
+          ]
+        }
+      ]
+    }
+  ]
+}
